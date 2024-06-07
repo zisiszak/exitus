@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { type Dirent, type PathLike } from 'fs';
-import { logger, type LogLevel } from './logger.js';
+import { logger, type GenericLogFunction, type LogConfig } from './logger.js';
 
 export const errorSym: unique symbol = Symbol('exitus-error');
 export type ErrorSym = typeof errorSym;
@@ -123,7 +123,8 @@ export interface NewErrorProps<Kind extends ErrorKind, Payload> {
 	 */
 	context?: Record<string, unknown>;
 
-	log?: boolean | LogLevel;
+	// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+	log?: boolean | keyof LogConfig;
 }
 
 export type NewError = <Kind extends ErrorKind = GenericErrorKindSym, CustomPayload = {}>(
@@ -273,7 +274,7 @@ export const newError: NewError = <
 		(newError.debug ??= {}).logged = false;
 		if (log === true) {
 			if ('error' in logger) {
-				logger.error(newError);
+				(logger.error as GenericLogFunction)(newError);
 				newError.debug.logged = true;
 			} else {
 				console.warn(
@@ -282,7 +283,7 @@ export const newError: NewError = <
 			}
 		} else if (typeof log === 'string') {
 			if (log in logger) {
-				logger[log](newError);
+				(logger[log] as GenericLogFunction)(newError);
 				newError.debug.logged = true;
 			} else {
 				console.warn(
