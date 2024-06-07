@@ -3,21 +3,21 @@ import { setLogConfig } from './logger.js';
 
 export type {
 	ErrorKind,
-	ErrorSym,
-	FsErrorKindSym,
 	FsErrorPayload,
 	GenericError,
-	GenericErrorKindSym,
 	GenericErrorPayload,
 	ModelledError,
 	ModelledErrorKindSym,
 	NewErrorProps,
-	ParamsErrorKindSym,
 	ParamsErrorPayload,
-	UnexpectedErrorKindSym,
 	UnexpectedErrorPayload,
 	UnknownErrorPayload,
-	UnknownErrorSym,
+	errorSym,
+	fsErrorKindSym,
+	genericErrorKindSym,
+	paramsErrorKindSym,
+	unexpectedErrorKindSym,
+	unknownErrorKindSym,
 } from './error.js';
 
 export type { LogConfig } from './logger.js';

@@ -3,29 +3,29 @@ import { type Dirent, type PathLike } from 'fs';
 import { logger, type GenericLogFunction, type LogConfig } from './logger.js';
 
 export const errorSym: unique symbol = Symbol('exitus-error');
-export type ErrorSym = typeof errorSym;
+export type errorSym = typeof errorSym;
 
 // ERROR MODELS
 
 // Unexpected Error
 export const unexpectedErrorKindSym: unique symbol = Symbol('exitus-error:unexpected');
-export type UnexpectedErrorKindSym = typeof unexpectedErrorKindSym;
+export type unexpectedErrorKindSym = typeof unexpectedErrorKindSym;
 
 // Unknown Error
 export const unknownErrorKindSym: unique symbol = Symbol('exitus-error:unknown');
-export type UnknownErrorSym = typeof unknownErrorKindSym;
+export type unknownErrorKindSym = typeof unknownErrorKindSym;
 
 // Generic Error
 export const genericErrorKindSym: unique symbol = Symbol('exitus-error:generic');
-export type GenericErrorKindSym = typeof genericErrorKindSym;
+export type genericErrorKindSym = typeof genericErrorKindSym;
 
 // FileSystem Error
 export const fsErrorKindSym: unique symbol = Symbol('exitus-error:fs');
-export type FsErrorKindSym = typeof fsErrorKindSym;
+export type fsErrorKindSym = typeof fsErrorKindSym;
 
 // Parameters Error
 export const paramsErrorKindSym: unique symbol = Symbol('exitus-error:params');
-export type ParamsErrorKindSym = typeof paramsErrorKindSym;
+export type paramsErrorKindSym = typeof paramsErrorKindSym;
 
 export const errorKind = {
 	fs: fsErrorKindSym,
@@ -36,10 +36,10 @@ export const errorKind = {
 } as const;
 
 export type ModelledErrorKindSym =
-	| UnexpectedErrorKindSym
-	| GenericErrorKindSym
-	| FsErrorKindSym
-	| ParamsErrorKindSym;
+	| unexpectedErrorKindSym
+	| genericErrorKindSym
+	| fsErrorKindSym
+	| paramsErrorKindSym;
 
 export type ErrorKind = ModelledErrorKindSym | string | number | symbol;
 
@@ -88,8 +88,8 @@ export type ModelledError<
 	Payload extends MappedPayload<Kind>,
 > = ErrorBase<Kind, Payload>;
 
-export type GenericError<CustomPayload = Record<string, never>> = ModelledError<
-	GenericErrorKindSym,
+export type GenericError<CustomPayload = {}> = ModelledError<
+	genericErrorKindSym,
 	CustomPayload & GenericErrorPayload
 >;
 
@@ -127,7 +127,7 @@ export interface NewErrorProps<Kind extends ErrorKind, Payload> {
 	log?: boolean | keyof LogConfig;
 }
 
-export type NewError = <Kind extends ErrorKind = GenericErrorKindSym, CustomPayload = {}>(
+export type NewError = <Kind extends ErrorKind = genericErrorKindSym, CustomPayload = {}>(
 	props?: NewErrorProps<
 		Kind,
 		(Kind extends ModelledErrorKindSym ? MappedPayload<Kind> : {}) & CustomPayload
@@ -220,7 +220,7 @@ export type NewError = <Kind extends ErrorKind = GenericErrorKindSym, CustomPayl
 ```
  */
 export const newError: NewError = <
-	Kind extends ErrorKind = GenericErrorKindSym,
+	Kind extends ErrorKind = genericErrorKindSym,
 	CustomPayload = {},
 >({
 	kind,
