@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { type Dirent, type PathLike } from 'fs';
+import { logger, type LogLevel } from './logger.js';
 
 export const errorSym: unique symbol = Symbol('exitus-error');
 export type ErrorSym = typeof errorSym;
@@ -50,6 +51,8 @@ export type ErrorBase<Kind extends ErrorKind, Payload> = {
 	payload: Payload;
 
 	debug?: {
+		logged?: boolean;
+
 		message?: string;
 
 		stack?: string;
@@ -119,6 +122,8 @@ export interface NewErrorProps<Kind extends ErrorKind, Payload> {
 	 * Should not be used in handling errors. Use the `payload` property instead.
 	 */
 	context?: Record<string, unknown>;
+
+	log?: boolean | LogLevel;
 }
 
 export type NewError = <Kind extends ErrorKind = GenericErrorKindSym, CustomPayload = {}>(
@@ -223,6 +228,7 @@ export const newError: NewError = <
 	stack,
 	caughtException,
 	context,
+	log = false,
 }: NewErrorProps<
 	Kind,
 	(Kind extends ModelledErrorKindSym ? MappedPayload<Kind> : {}) & CustomPayload
@@ -242,7 +248,7 @@ export const newError: NewError = <
 		typeof message === 'string' ||
 		stack === true ||
 		typeof stack === 'string' ||
-		context
+		!!context
 	) {
 		if (caughtException && caughtException instanceof Error) {
 			message ??= caughtException.message;
@@ -261,6 +267,33 @@ export const newError: NewError = <
 			message,
 			stack,
 		};
+	}
+
+	if (log) {
+		(newError.debug ??= {}).logged = false;
+		if (log === true) {
+			if ('error' in logger) {
+				logger.error(newError);
+				newError.debug.logged = true;
+			} else {
+				console.warn(
+					`exitus: A function for the default error logger (key: 'error') is not defined.`,
+				);
+			}
+		} else if (typeof log === 'string') {
+			if (log in logger) {
+				logger[log](newError);
+				newError.debug.logged = true;
+			} else {
+				console.warn(
+					`exitus: The 'log' level provided does not have a matching logging function defined.`,
+				);
+			}
+		} else {
+			console.warn(
+				`exitus: The NewError 'log' property value must be a string, boolean, or undefined.`,
+			);
+		}
 	}
 
 	return newError;

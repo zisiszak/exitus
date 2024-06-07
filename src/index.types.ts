@@ -16,3 +16,5 @@ export type {
 	UnknownErrorPayload,
 	UnknownErrorSym,
 } from './error.js';
+
+export type { LogConfig, LogLevel } from './logger.js';
