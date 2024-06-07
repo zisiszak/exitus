@@ -7,5 +7,3 @@ export const exitus = Object.freeze({
 	newError,
 	errorKind,
 });
-
-export { errorKind, isError, newError };
