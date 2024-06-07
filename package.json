@@ -1,6 +1,6 @@
 {
 	"name": "exitus",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Typed and extensible error wrapping.",
 	"type": "module",
 	"author": {

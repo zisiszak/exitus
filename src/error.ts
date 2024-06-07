@@ -121,16 +121,14 @@ export interface NewErrorProps<Kind extends ErrorKind, Payload> {
 	context?: Record<string, unknown>;
 }
 
-export type NewError = {
-	<Kind extends ErrorKind = GenericErrorKindSym, CustomPayload = {}>(
-		props?: NewErrorProps<
-			Kind,
-			(Kind extends ModelledErrorKindSym ? MappedPayload<Kind> : {}) & CustomPayload
-		>,
-	): Kind extends ModelledErrorKindSym
-		? ModelledError<Kind, MappedPayload<Kind> & CustomPayload>
-		: ErrorBase<Kind, CustomPayload>;
-};
+export type NewError = <Kind extends ErrorKind = GenericErrorKindSym, CustomPayload = {}>(
+	props?: NewErrorProps<
+		Kind,
+		(Kind extends ModelledErrorKindSym ? MappedPayload<Kind> : {}) & CustomPayload
+	>,
+) => Kind extends ModelledErrorKindSym
+	? ModelledError<Kind, MappedPayload<Kind> & CustomPayload>
+	: ErrorBase<Kind, CustomPayload>;
 
 /**
 * ### Generic Errors
