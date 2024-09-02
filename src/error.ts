@@ -1,118 +1,43 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { type Dirent, type PathLike } from 'fs';
-import { logger, type GenericLogFunction, type LogConfig } from './logger.js';
 
-export const errorSym: unique symbol = Symbol('exitus-error');
-export type errorSym = typeof errorSym;
+export const exerrSym: unique symbol = Symbol('exitus-error');
+export type exerrSym = typeof exerrSym;
 
-// ERROR MODELS
+export const genericExerrCode: unique symbol = Symbol('exitus:generic-exerr');
+export type genericExerrCode = typeof genericExerrCode;
 
-// Unexpected Error
-export const unexpectedErrorKindSym: unique symbol = Symbol('exitus-error:unexpected');
-export type unexpectedErrorKindSym = typeof unexpectedErrorKindSym;
+export type ExerrCode = string | number | symbol | genericExerrCode;
 
-// Unknown Error
-export const unknownErrorKindSym: unique symbol = Symbol('exitus-error:unknown');
-export type unknownErrorKindSym = typeof unknownErrorKindSym;
-
-// Generic Error
-export const genericErrorKindSym: unique symbol = Symbol('exitus-error:generic');
-export type genericErrorKindSym = typeof genericErrorKindSym;
-
-// FileSystem Error
-export const fsErrorKindSym: unique symbol = Symbol('exitus-error:fs');
-export type fsErrorKindSym = typeof fsErrorKindSym;
-
-// Parameters Error
-export const paramsErrorKindSym: unique symbol = Symbol('exitus-error:params');
-export type paramsErrorKindSym = typeof paramsErrorKindSym;
-
-export const errorKind = {
-	fs: fsErrorKindSym,
-	generic: genericErrorKindSym,
-	unknown: unknownErrorKindSym,
-	unexpected: unexpectedErrorKindSym,
-	params: paramsErrorKindSym,
-} as const;
-
-export type ModelledErrorKindSym =
-	| unexpectedErrorKindSym
-	| genericErrorKindSym
-	| fsErrorKindSym
-	| paramsErrorKindSym;
-
-export type ErrorKind = ModelledErrorKindSym | string | number | symbol;
-
-export type ErrorBase<Kind extends ErrorKind, Payload> = {
-	[errorSym]: true;
-
-	kind: Kind;
-
-	payload: Payload;
-
-	debug?: {
-		logged?: boolean;
-
-		message?: string;
-
-		stack?: string;
-
-		caughtException?: unknown;
-
-		context?: Record<string, unknown>;
-	};
-};
-
-export interface GenericErrorPayload {}
-export interface UnknownErrorPayload {}
-export interface UnexpectedErrorPayload {}
-export interface FsErrorPayload {
-	file?: Dirent | PathLike;
-	files?: Dirent[] | PathLike[];
-}
-export interface ParamsErrorPayload<ParamRef extends string = string> {
-	invalidParam?: ParamRef;
-	invalidParams?: ParamRef[];
+export interface Exerr<Code extends ExerrCode> {
+	[exerrSym]: true;
+	code: Code;
+	message?: string;
+	stack?: string;
+	caughtException?: unknown;
+	context?: Record<string, unknown>;
 }
 
-type MappedPayload<Kind extends ModelledErrorKindSym> = {
-	[genericErrorKindSym]: GenericErrorPayload;
-	[unknownErrorKindSym]: UnknownErrorPayload;
-	[unexpectedErrorKindSym]: UnexpectedErrorPayload;
-	[fsErrorKindSym]: FsErrorPayload;
-	[paramsErrorKindSym]: ParamsErrorPayload;
-}[Kind];
+export type GenericExerr = Exerr<genericExerrCode>;
 
-export type ModelledError<
-	Kind extends ModelledErrorKindSym,
-	Payload extends MappedPayload<Kind>,
-> = ErrorBase<Kind, Payload>;
-
-export type GenericError<CustomPayload = {}> = ModelledError<
-	genericErrorKindSym,
-	CustomPayload & GenericErrorPayload
->;
-
-export interface NewErrorProps<Kind extends ErrorKind, Payload> {
-	readonly kind?: Kind;
-
-	readonly payload?: Payload;
-
-	// Debug properties. If any are defined, the debug property on the ExitusError will not be null.
+interface CreateExerrProps<Code extends ExerrCode> {
+	/**
+	 * An identifiable error code
+	 */
+	code?: Code;
 
 	/**
-	 * ### debug: message
+	 * ### debug: Message
 	 * This is a debug message property. For most cases, use the payload property if you intend on showing error messages to users.
 	 */
 	message?: string;
 
 	/**
-	 * ### debug: stack
+	 * ### debug: Stack
 	 * Set to `true` to generate a trace. Otherwise, a string can be provided directly. */
 	stack?: boolean | string;
 
 	/**
-	 * ### debug: caughtException
+	 * ### debug: Caught exception
 	 * The caught exception/error, if applicable. If it is a js `Error` type, it will be unwrapped and its property values will be used as fallbacks for the resultant `debug` object. */
 	caughtException?: unknown;
 
@@ -122,84 +47,28 @@ export interface NewErrorProps<Kind extends ErrorKind, Payload> {
 	 * Should not be used in handling errors. Use the `payload` property instead.
 	 */
 	context?: Record<string, unknown>;
-
-	// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
-	log?: boolean | keyof LogConfig;
 }
 
-export type NewError = <Kind extends ErrorKind = genericErrorKindSym, CustomPayload = {}>(
-	props?: NewErrorProps<
-		Kind,
-		(Kind extends ModelledErrorKindSym ? MappedPayload<Kind> : {}) & CustomPayload
-	>,
-) => Kind extends ModelledErrorKindSym
-	? ModelledError<Kind, MappedPayload<Kind> & CustomPayload>
-	: ErrorBase<Kind, CustomPayload>;
-
 /**
-* ### Generic Errors
+* ### Generic Errors - `GenericExerr`
 *
-* With no arguments provided, `newError` will create a `GenericError`.
-* You can also call `newError` using the property defined on the `exitus` export.
+* With no arguments provided, `exerr` will create a `GenericExerr`.
 *
 * @example
 *
 * ```ts
-* const ohShucks = newError() satisfies Exitus.GenericError;
+* const ohShucks = exerr() satisfies GenericExerr;
 * ```
 *
-* ### Custom Payloads
-*
-* An example of a `GenericError` with a custom payload:
+* ### Custom Error Codes
 *
 * @example
 *
 * ```ts
-* const ohSnap = exitus.newError({
-*     payload: {
-*         whyItFailed: 'skill issue',
-*     },
-* }) satisfies Exitus.GenericError<{
-*     whyItFailed: string;
-* }>;
-* ```
-*
-* ### Pre-Modelled Error Kinds
-*
-* A few pre-modelled error kinds are included, and come with their own specific payload properties (optional).
-*
-* To specify a pre-modelled error type, assign the `kind` property to one of the symbols in `exitus.errorKind`.
-*
-* @example
-*
-* ```ts
-* const ohNo = exitus.newError({
-*     kind: exitus.errorKind.fs,
-*     payload: {
-*         file: "some/path/to/a/file",
-*         files: ["some/path/elsewhere", "another/path/elsewhere"]
-*         // Custom properties can still be included.
-*         howItFailed: "I dunno",
-*     }
-* }) satisfies Exitus.ModelledError<typeof fsErrorKindSym, FsErrorPayload & {
-*     howItFailed: string;
-* }>;
-* ```
-*
-* ### Custom Error Kinds
-*
-* @example
-*
-* ```ts
-* const ohWhat = exitus.newError({
+* const ohWhat = exerr({
 *     // Can be a number, symbol or string
-*     kind: 'INESCAPABLE_DOOM',
-*     payload: {
-*         theEndIsNear: true,
-*     },
-* }) satisfies Exitus.ModelledError<"INESCAPABLE_DOOM", {
-*     theEndIsNear: boolean;
-* }>;
+*     code: 'INESCAPABLE_DOOM',
+* }) satisfies Exerr<"INESCAPABLE_DOOM">;
 * ```
 *
 * ### Debugging Options
@@ -208,7 +77,7 @@ export type NewError = <Kind extends ErrorKind = genericErrorKindSym, CustomPayl
 *
 * @example
 * ```ts
-* const ohBrother = exitus.newError({
+* const ohBrother = exerr({
 *    message: "'... I bet <insert framework of choice> doesn't have these issues.'",
 *    caughtException: new Error(),
 *    context: {
@@ -219,86 +88,36 @@ export type NewError = <Kind extends ErrorKind = genericErrorKindSym, CustomPayl
 * });
 ```
  */
-export const newError: NewError = <
-	Kind extends ErrorKind = genericErrorKindSym,
-	CustomPayload = {},
->({
-	kind,
-	payload,
+
+function _exerr<Code extends ExerrCode>(props: CreateExerrProps<Code>): Exerr<Code>;
+function _exerr<Code extends genericExerrCode>(props?: CreateExerrProps<Code>): GenericExerr;
+function _exerr<Code extends ExerrCode = genericExerrCode>({
+	code,
 	message,
 	stack,
 	caughtException,
 	context,
-	log = false,
-}: NewErrorProps<
-	Kind,
-	(Kind extends ModelledErrorKindSym ? MappedPayload<Kind> : {}) & CustomPayload
-> = {}): Kind extends ModelledErrorKindSym
-	? ModelledError<Kind, MappedPayload<Kind> & CustomPayload>
-	: ErrorBase<Kind, CustomPayload> => {
-	const newError = {
-		[errorSym]: true,
-		kind: kind,
-		payload: payload,
-	} as Kind extends ModelledErrorKindSym
-		? ModelledError<Kind, MappedPayload<Kind> & CustomPayload>
-		: ErrorBase<Kind, CustomPayload>;
+}: CreateExerrProps<Code> = {}) {
+	const exerr = {
+		[exerrSym]: true,
+		code: code,
+		caughtException,
+		message,
+		context,
+	} as Code extends genericExerrCode ? GenericExerr : Exerr<Code>;
 
-	if (
-		caughtException ||
-		typeof message === 'string' ||
-		stack === true ||
-		typeof stack === 'string' ||
-		!!context
-	) {
-		if (caughtException && caughtException instanceof Error) {
-			message ??= caughtException.message;
-			stack ??= caughtException.stack;
-		}
-
-		if (stack === true) {
-			stack = (new Error().stack ?? '').split('\n').slice(2).join('\n').trim();
-		} else if (stack === false) {
-			stack = undefined;
-		}
-
-		newError.debug = {
-			caughtException,
-			context,
-			message,
-			stack,
-		};
+	if (caughtException instanceof Error) {
+		exerr.message ??= caughtException.message;
+		if (caughtException.stack) exerr.stack ??= caughtException.stack;
 	}
 
-	if (log) {
-		(newError.debug ??= {}).logged = false;
-		if (log === true) {
-			if ('error' in logger) {
-				(logger.error as GenericLogFunction)(newError);
-				newError.debug.logged = true;
-			} else {
-				console.warn(
-					`exitus: A function for the default error logger (key: 'error') is not defined.`,
-				);
-			}
-		} else if (typeof log === 'string') {
-			if (log in logger) {
-				(logger[log] as GenericLogFunction)(newError);
-				newError.debug.logged = true;
-			} else {
-				console.warn(
-					`exitus: The 'log' level provided does not have a matching logging function defined.`,
-				);
-			}
-		} else {
-			console.warn(
-				`exitus: The NewError 'log' property value must be a string, boolean, or undefined.`,
-			);
-		}
-	}
+	if (stack === true && typeof exerr.stack === 'undefined')
+		exerr.stack = (new Error().stack ?? '').split('\n').slice(2).join('\n').trim();
 
-	return newError;
-};
+	return exerr;
+}
 
-export const isError = (value: unknown): value is ErrorBase<any, any> =>
-	typeof value === 'object' && value !== null && (value as any)[errorSym] === true;
+export const exerr = _exerr;
+
+export const isExerr = (value: unknown): value is Exerr<any> =>
+	typeof value === 'object' && value !== null && (value as any)[exerrSym] === true;
