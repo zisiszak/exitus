@@ -1,6 +1,6 @@
 {
 	"name": "exitus",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"description": "Typed error wrapping.",
 	"type": "module",
 	"author": {
@@ -9,7 +9,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/zisiszak/exitus"
+		"url": "git+https://github.com/zisiszak/exitus.git"
 	},
 	"license": "ISC",
 	"files": [

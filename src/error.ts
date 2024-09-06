@@ -89,7 +89,9 @@ interface CreateExerrProps<Code extends ExerrCode> {
 ```
  */
 
-function _exerr<Code extends ExerrCode>(props: CreateExerrProps<Code>): Exerr<Code>;
+function _exerr<Code extends ExerrCode>(
+	props: CreateExerrProps<Code> & { code: Code },
+): Exerr<Code>;
 function _exerr<Code extends genericExerrCode>(props?: CreateExerrProps<Code>): GenericExerr;
 function _exerr<Code extends ExerrCode = genericExerrCode>({
 	code,
