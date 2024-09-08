@@ -19,7 +19,7 @@ export interface Exerr<Code extends ExerrCode> {
 
 export type GenericExerr = Exerr<genericExerrCode>;
 
-interface CreateExerrProps<Code extends ExerrCode> {
+interface NewExerrProps<Code extends ExerrCode> {
 	/**
 	 * An identifiable error code
 	 */
@@ -89,17 +89,33 @@ interface CreateExerrProps<Code extends ExerrCode> {
 ```
  */
 
+function _exerr<Code extends ExerrCode>(props: NewExerrProps<Code> & { code: Code }): Exerr<Code>;
+function _exerr<Code extends genericExerrCode>(props?: NewExerrProps<Code>): GenericExerr;
 function _exerr<Code extends ExerrCode>(
-	props: CreateExerrProps<Code> & { code: Code },
+	code: Code,
+	props?: Omit<NewExerrProps<never>, 'code'>,
 ): Exerr<Code>;
-function _exerr<Code extends genericExerrCode>(props?: CreateExerrProps<Code>): GenericExerr;
-function _exerr<Code extends ExerrCode = genericExerrCode>({
-	code,
-	message,
-	stack,
-	caughtException,
-	context,
-}: CreateExerrProps<Code> = {}) {
+function _exerr<Code extends ExerrCode = genericExerrCode>(
+	code_props: NewExerrProps<Code> | Code = genericExerrCode as Code,
+	props_never?: Omit<NewExerrProps<never>, 'code'> | undefined,
+	// { code, message, stack, caughtException, context }: CreateExerrProps<Code> = {},
+) {
+	const props =
+		typeof code_props === 'object'
+			? code_props
+			: typeof props_never === 'object'
+				? props_never
+				: {};
+	const { message, stack, caughtException, context } = props;
+	const code: Code =
+		typeof code_props === 'object'
+			? typeof code_props.code !== 'undefined'
+				? code_props.code
+				: (genericExerrCode as Code)
+			: typeof code_props !== 'undefined'
+				? code_props
+				: (genericExerrCode as Code);
+
 	const exerr = {
 		[exerrSym]: true,
 		code: code,
